@@ -5,8 +5,16 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
+
+COPY dummy.rs .
+RUN echo '[workspace]' > Cargo.toml && \
+    echo 'members = []' >> Cargo.toml && \
+    cargo build --release
+
 RUN git clone https://github.com/Thunderbottom/umami-alerts.git .
 RUN rustup update stable
+RUN cargo generate-lockfile
+RUN cargo fetch
 RUN cargo build --release
 
 FROM debian:bullseye-slim
