@@ -1,4 +1,4 @@
-FROM rust:1.77-slim-bullseye AS builder
+FROM rust:1.80-slim-bullseye AS builder
 
 RUN apt-get update && \
     apt-get install -y pkg-config libssl-dev git && \
@@ -6,9 +6,6 @@ RUN apt-get update && \
 
 WORKDIR /app
 RUN git clone https://github.com/Thunderbottom/umami-alerts.git .
-RUN rustup update stable
-RUN cargo generate-lockfile
-RUN cargo fetch
 RUN cargo build --release
 
 FROM debian:bullseye-slim
