@@ -8,22 +8,21 @@ WORKDIR /app
 RUN git clone https://github.com/Thunderbottom/umami-alerts.git .
 RUN cargo build --release
 
-# Final runtime image with cron
+# Final runtime image with cron and logging
 FROM debian:bookworm-slim
 
-# Install dependencies + cron
 RUN apt-get update && \
-    apt-get install -y openssl ca-certificates tzdata cron && \
+    apt-get install -y openssl ca-certificates tzdata cron rsyslog && \
     rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /app/target/release/umami-alerts /usr/local/bin/
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
+# Configure logging
+RUN touch /var/log/cron.log && \
+    sed -i '/#cron.*/c\cron.* /proc/1/fd/1' /etc/rsyslog.conf && \
+    sed -i 's/^#module(load="imklog")/module(load="imklog")/' /etc/rsyslog.conf
+
 WORKDIR /config
-
-# Health check to verify cron is running
-HEALTHCHECK --interval=5m --timeout=30s \
-    CMD pgrep cron || exit 1
-
 ENTRYPOINT ["/entrypoint.sh"]
