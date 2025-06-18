@@ -8,19 +8,16 @@ WORKDIR /app
 RUN git clone https://github.com/Thunderbottom/umami-alerts.git .
 RUN cargo build --release
 
-# Final runtime image with cron
+# Final runtime image
 FROM debian:bookworm-slim
 
 RUN apt-get update && \
-    apt-get install -y openssl ca-certificates tzdata cron && \
+    apt-get install -y openssl ca-certificates tzdata && \
     rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /app/target/release/umami-alerts /usr/local/bin/
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
-
-# Create log file
-RUN touch /var/log/cron.log
+COPY scheduler.sh /scheduler.sh
+RUN chmod +x /scheduler.sh
 
 WORKDIR /config
-ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT ["/scheduler.sh"]
