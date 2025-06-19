@@ -18,12 +18,21 @@ echo "Schedule: $SCHEDULE"
 echo "Current time: $(date)"
 echo "======================================"
 
-# Create the cron job
-echo "$SCHEDULE timeout 300 umami-alerts --config /config/config.toml >> /var/log/cron.log 2>&1" > /etc/cron.d/umami-alerts
+# Set up environment for cron
+echo "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" > /etc/cron.d/umami-alerts
+echo "SHELL=/bin/bash" >> /etc/cron.d/umami-alerts
+if [ -n "$TZ" ]; then
+    echo "TZ=$TZ" >> /etc/cron.d/umami-alerts
+fi
+
+# Create the cron job with proper newline
+echo "$SCHEDULE timeout 300 umami-alerts --config /config/config.toml >> /var/log/cron.log 2>&1" >> /etc/cron.d/umami-alerts
+echo "" >> /etc/cron.d/umami-alerts  # Add required newline
 chmod 0644 /etc/cron.d/umami-alerts
 
-# Create log file
+# Create log file and set permissions
 touch /var/log/cron.log
+chmod 0666 /var/log/cron.log  # Ensure cron can write to the log file
 
 # Start cron in the foreground
 cron -f &
