@@ -18,24 +18,28 @@ echo "Schedule: $SCHEDULE"
 echo "Current time: $(date)"
 echo "======================================"
 
-# Set up environment for cron
-echo "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" > /etc/cron.d/umami-alerts
-echo "SHELL=/bin/bash" >> /etc/cron.d/umami-alerts
-if [ -n "$TZ" ]; then
-    echo "TZ=$TZ" >> /etc/cron.d/umami-alerts
-fi
+# Create crontab file
+CRONTAB_FILE="/etc/cron.d/umami-alerts"
+cat > "$CRONTAB_FILE" << EOF
+# For details see man 4 crontabs
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+MAILTO=""
+${TZ:+"TZ=$TZ"}
 
-# Create the cron job with proper newline
-echo "$SCHEDULE timeout 300 umami-alerts --config /config/config.toml >> /var/log/cron.log 2>&1" >> /etc/cron.d/umami-alerts
-echo "" >> /etc/cron.d/umami-alerts  # Add required newline
-chmod 0644 /etc/cron.d/umami-alerts
+# Run umami-alerts at scheduled time
+$SCHEDULE root timeout 300 umami-alerts --config /config/config.toml >> /var/log/cron.log 2>&1
+
+EOF
+
+chmod 0644 "$CRONTAB_FILE"
 
 # Create log file and set permissions
 touch /var/log/cron.log
-chmod 0666 /var/log/cron.log  # Ensure cron can write to the log file
+chmod 0666 /var/log/cron.log
 
-# Start cron in the foreground
-cron -f &
+# Stop any existing cron processes
+pkill cron || true
 
-# Tail the logs so we can see what's happening
-exec tail -f /var/log/cron.log
+# Start cron with debugging enabled and in the foreground
+exec cron -f -L 15
