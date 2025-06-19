@@ -38,8 +38,8 @@ chmod 0644 "$CRONTAB_FILE"
 touch /var/log/cron.log
 chmod 0666 /var/log/cron.log
 
-# Stop any existing cron processes
-pkill cron || true
-
 # Start cron with debugging enabled and in the foreground
-exec cron -f -L 15
+cron -f -L 15 &
+
+# Show cron logs in real time
+exec tail -f /var/log/cron.log /var/log/syslog 2>/dev/null
