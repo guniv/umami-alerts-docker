@@ -12,7 +12,7 @@ RUN cargo build --release
 FROM debian:bookworm-slim
 
 RUN apt-get update && \
-    apt-get install -y openssl ca-certificates tzdata && \
+    apt-get install -y openssl ca-certificates tzdata cron && \
     rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /app/target/release/umami-alerts /usr/local/bin/
